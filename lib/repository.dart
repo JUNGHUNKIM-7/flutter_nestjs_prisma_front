@@ -107,9 +107,10 @@ class Repository {
   }
 
   Future<void> _timeChecker() async {
-    String old = _box.get('updatedAt');
-    DateTime deadline = DateTime.parse(old).add(const Duration(minutes: 13));
-    DateTime now = DateTime.now();
+    final String old = _box.get('updatedAt');
+    final DateTime deadline =
+        DateTime.parse(old).add(const Duration(minutes: 13));
+    final DateTime now = DateTime.now();
 
     // now < deadline(old + 10min) == -1
     // refresh => now == deadline(0) or now > deadline(1)
