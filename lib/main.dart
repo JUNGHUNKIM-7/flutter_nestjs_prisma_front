@@ -2,6 +2,7 @@ import 'package:client/hive/adapter/token_adapter.dart';
 import 'package:client/repository.dart';
 import 'package:client/styles.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -48,16 +49,16 @@ class MyApp extends HookConsumerWidget {
   static final GoRouter _router = GoRouter(
     routes: <GoRoute>[
       GoRoute(
-        path: '/',
+        path: Route.home.path,
         builder: (BuildContext context, GoRouterState state) => const Home(),
         routes: <GoRoute>[
           GoRoute(
-            path: 'page2',
+            path: Route.page2.path,
             builder: (BuildContext context, GoRouterState state) =>
                 const SignedPage(),
             routes: [
               GoRoute(
-                path: ':id',
+                path: Route.page2ById.path,
                 builder: (BuildContext context, GoRouterState state) {
                   final id = state.params['id'] != null;
                   return NestedPage(
@@ -109,7 +110,7 @@ class NoSignedPage extends HookConsumerWidget with Seed {
               .watch(dioProvider)
               .signIn()
               .catchError((e) => throw Exception(e.toString()))
-              .then((_) => context.go('/page2')),
+              .then((_) => context.go(Route.page2.path)),
           child: Text(
             'sign in'.toUpperCase(),
           ),
@@ -135,8 +136,8 @@ class SignedPage extends HookConsumerWidget {
                   .watch(dioProvider)
                   .signOut()
                   .catchError((e) => throw Exception(e.toString()))
-                  .then((_) => context.go('/')),
-              child: const Text('out'),
+                  .then((_) => context.go(Route.home.path)),
+              child: Text(Route.home.getPath()),
             ),
           )
         ],
@@ -159,11 +160,48 @@ class NestedPage extends StatelessWidget {
             child: Text('$num'),
           ),
           ElevatedButton(
-            onPressed: () => context.go('/'),
-            child: const Text('go Home'),
+            onPressed: () => context.go(Route.home.path),
+            child: Text(Route.home.getPath().toUpperCase()),
           ),
         ],
       ),
     );
+  }
+}
+
+enum Route {
+  home(path: '/', text: "home"),
+  page2(path: '/page2', text: "page2"),
+  page2ById(path: ':id', text: "page2");
+
+  final String path;
+  final String text;
+  const Route({
+    required this.path,
+    required this.text,
+  });
+}
+
+extension Path on Route {
+  String getPath([String? text]) {
+    if (text != null) {
+      switch (this) {
+        case Route.home:
+          return text;
+        case Route.page2:
+          return text;
+        case Route.page2ById:
+          return text;
+      }
+    } else {
+      switch (this) {
+        case Route.home:
+          return Route.home.text;
+        case Route.page2:
+          return Route.page2.text;
+        case Route.page2ById:
+          return Route.page2ById.text;
+      }
+    }
   }
 }
