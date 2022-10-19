@@ -32,7 +32,7 @@ class Repository {
   static const int minDelta = 13;
   static final debugData = {"email": "test10@email.com", "password": "testpwd"};
 
-  FutureOr _catchDioErr(VoidCallback f) {
+  FutureOr<void> _catchDioErr(VoidCallback f) {
     try {
       f();
     } on DioError catch (e) {
@@ -127,7 +127,7 @@ class Repository {
     }
   }
 
-  void _setToken() {
+  FutureOr<void> _setToken() {
     final res = _response?.data.toString();
     if (res != null && res.isNotEmpty) {
       final subStr = res.split(',');
