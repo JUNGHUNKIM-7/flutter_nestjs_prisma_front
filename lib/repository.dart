@@ -17,12 +17,12 @@ class Repository {
   factory Repository.getInstance(Dio dio, Box box) =>
       Repository._instance(dio: dio, box: box);
 
-  static Options _getOptions(BoxProps token, Box box) {
+  static Options _getOptions(BoxProp token, Box box) {
     switch (token) {
-      case BoxProps.at:
-        return Options(headers: {"authorization": box.get(BoxProps.at.value)});
-      case BoxProps.rt:
-        return Options(headers: {"authorization": box.get(BoxProps.rt.value)});
+      case BoxProp.at:
+        return Options(headers: {"authorization": box.get(BoxProp.at.value)});
+      case BoxProp.rt:
+        return Options(headers: {"authorization": box.get(BoxProp.rt.value)});
       default:
         throw Exception('invalid');
     }
@@ -32,7 +32,7 @@ class Repository {
   static const int minDelta = 13;
   static final debugData = {"email": "test10@email.com", "password": "testpwd"};
 
-  void _catchDioErr(VoidCallback f) {
+  FutureOr _catchDioErr(VoidCallback f) {
     try {
       f();
     } on DioError catch (e) {
@@ -44,7 +44,7 @@ class Repository {
 
   //@public
   Future<void> signup() async {
-    _catchDioErr(
+    await _catchDioErr(
       () async {
         _response = await _dio
             .post(
@@ -60,7 +60,7 @@ class Repository {
 
   //@public
   Future<void> signIn() async {
-    _catchDioErr(() async {
+    await _catchDioErr(() async {
       _response = await _dio
           .post(
         AuthPath.signin.getPath(),
@@ -73,38 +73,38 @@ class Repository {
   }
 
   Future<void> _deleteAll() async {
-    _catchDioErr(() async {
+    await _catchDioErr(() async {
       await _dio.post(
         AuthPath.debug.getPath(),
-        options: _getOptions(BoxProps.at, _box),
+        options: _getOptions(BoxProp.at, _box),
       );
     });
   }
 
   Future<void> signOut() async {
-    if (_box.get(BoxProps.at.value) != null) {
-      _catchDioErr(() async {
+    if (_box.get(BoxProp.at.value) != null) {
+      await _catchDioErr(() async {
         await _timeChecker();
         _response = await _dio
             .post(
           AuthPath.signout.getPath(),
-          options: _getOptions(BoxProps.at, _box),
+          options: _getOptions(BoxProp.at, _box),
         )
             .whenComplete(() {
           _deleteAll();
-          _box.delete(BoxProps.rt.value);
+          _box.delete(BoxProp.rt.value);
         });
       });
     }
   }
 
   Future<void> refreshToken() async {
-    if (_box.get(BoxProps.rt.value) != null) {
-      _catchDioErr(() async {
+    if (_box.get(BoxProp.rt.value) != null) {
+      await _catchDioErr(() async {
         _response = await _dio
             .post(
               AuthPath.refresh.getPath(),
-              options: _getOptions(BoxProps.rt, _box),
+              options: _getOptions(BoxProp.rt, _box),
             )
             .whenComplete(() => _setToken());
       });
@@ -112,7 +112,7 @@ class Repository {
   }
 
   Future<void> _timeChecker() async {
-    final String old = _box.get(BoxProps.updatedAt.value);
+    final String old = _box.get(BoxProp.updatedAt.value);
     final DateTime deadline =
         DateTime.parse(old).add(const Duration(minutes: minDelta));
     final DateTime now = DateTime.now();
@@ -135,21 +135,21 @@ class Repository {
       final rt = subStr[1].split(':').last.trim();
       final updatedAt = subStr.last.split(' ').last.replaceAll('}', '');
 
-      _box.put(BoxProps.at.value, "Bearer $at");
-      _box.put(BoxProps.rt.value, "Bearer $rt");
-      _box.put(BoxProps.updatedAt.value, updatedAt);
+      _box.put(BoxProp.at.value, "Bearer $at");
+      _box.put(BoxProp.rt.value, "Bearer $rt");
+      _box.put(BoxProp.updatedAt.value, updatedAt);
     }
   }
 }
 
-enum BoxProps {
+enum BoxProp {
   at(value: 'at'),
   rt(value: 'rt'),
   updatedAt(value: 'updatedAt');
 
   final String value;
 
-  const BoxProps({
+  const BoxProp({
     required this.value,
   });
 }

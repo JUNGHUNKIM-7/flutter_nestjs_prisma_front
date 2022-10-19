@@ -2,7 +2,6 @@ import 'package:client/hive/adapter/token_adapter.dart';
 import 'package:client/repository.dart';
 import 'package:client/styles.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
@@ -49,16 +48,16 @@ class MyApp extends HookConsumerWidget {
   static final GoRouter _router = GoRouter(
     routes: <GoRoute>[
       GoRoute(
-        path: Route.home.path,
+        path: Route.home.path.toString(),
         builder: (BuildContext context, GoRouterState state) => const Home(),
         routes: <GoRoute>[
           GoRoute(
-            path: Route.page2.path,
+            path: Route.page2.path.toString(),
             builder: (BuildContext context, GoRouterState state) =>
                 const SignedPage(),
             routes: [
               GoRoute(
-                path: Route.page2ById.path,
+                path: Route.page2ById.path.toString(),
                 builder: (BuildContext context, GoRouterState state) {
                   final id = state.params['id'] != null;
                   return NestedPage(
@@ -82,7 +81,7 @@ class Home extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         //when signed out, rt will be null
-        body: box.get(BoxProps.rt.value) != null
+        body: box.get(BoxProp.rt.value) != null
             ? const SignedPage()
             : const NoSignedPage(),
       ),
@@ -171,7 +170,7 @@ class NestedPage extends StatelessWidget {
 
 enum Route {
   home(path: '/', text: "home"),
-  page2(path: '/page2', text: "page2"),
+  page2(path: 'page2', text: "page2"),
   page2ById(path: ':id', text: "page2");
 
   final String path;
