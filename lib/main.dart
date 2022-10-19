@@ -1,21 +1,34 @@
-import 'package:demo/hive/adapter/token-adapter.dart';
-import 'package:demo/repository.dart';
-import 'package:demo/styles.dart';
+import 'package:client/hive/adapter/token_adapter.dart';
+import 'package:client/repository.dart';
+import 'package:client/styles.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+const boxName = 'tokens';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(HiveTokensAdapter());
-  await Hive.openBox('tokens');
+  await Hive.openBox(boxName);
   runApp(const ProviderScope(child: MyApp()));
 }
 
+final dioInit = Provider<Dio>((ref) {
+  return Dio(
+    BaseOptions(
+      baseUrl: AuthPath.home.getPath(),
+      connectTimeout: 5000,
+      receiveTimeout: 3000,
+    ),
+  );
+});
+
 final dioProvider = Provider<Repository>((ref) {
-  return Repository.getInstance();
+  return Repository.getInstance(ref.watch(dioInit), Hive.box(boxName));
 });
 
 class MyApp extends HookConsumerWidget {
@@ -64,11 +77,13 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Box box = Hive.box('tokens');
+    final Box box = Hive.box(boxName);
     return SafeArea(
       child: Scaffold(
         //when signed out, rt will be null
-        body: box.get('rt') != null ? const SignedPage() : const NoSignedPage(),
+        body: box.get(BoxProps.rt.value) != null
+            ? const SignedPage()
+            : const NoSignedPage(),
       ),
     );
   }
@@ -90,12 +105,15 @@ class NoSignedPage extends HookConsumerWidget with Seed {
           child: Text('sign up'.toUpperCase()),
         ),
         ElevatedButton(
-            onPressed: () async => await ref
-                .watch(dioProvider)
-                .signIn()
-                .catchError((e) => throw Exception(e.toString()))
-                .then((_) => context.go('/page2')),
-            child: Text('sign in'.toUpperCase())),
+          onPressed: () async => await ref
+              .watch(dioProvider)
+              .signIn()
+              .catchError((e) => throw Exception(e.toString()))
+              .then((_) => context.go('/page2')),
+          child: Text(
+            'sign in'.toUpperCase(),
+          ),
+        ),
       ],
     );
   }
@@ -141,7 +159,9 @@ class NestedPage extends StatelessWidget {
             child: Text('$num'),
           ),
           ElevatedButton(
-              onPressed: () => context.go('/'), child: const Text('go Home')),
+            onPressed: () => context.go('/'),
+            child: const Text('go Home'),
+          ),
         ],
       ),
     );

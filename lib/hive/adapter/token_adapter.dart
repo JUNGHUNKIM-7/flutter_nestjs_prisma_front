@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-part 'token-adapter.g.dart';
+part 'token_adapter.g.dart';
 
 @HiveType(typeId: 1)
 class HiveTokens {

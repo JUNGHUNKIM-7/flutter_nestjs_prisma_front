@@ -5,37 +5,38 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 class Repository {
-  Repository._instance();
-  factory Repository.getInstance() => Repository._instance();
+  final Dio _dio;
+  final Box _box;
 
-  final Dio dio = Dio(
-    BaseOptions(
-      connectTimeout: 5000,
-      receiveTimeout: 3000,
-    ),
-  );
-  static const _root = "http://10.0.2.2:3000";
-  static const _auth = "http://10.0.2.2:3000/auth";
-  static final Box _box = Hive.box('tokens');
-  static Options _getOptions(String type, Box box) {
-    switch (type) {
-      case 'at':
-        return Options(headers: {"authorization": box.get('at')});
-      case 'rt':
-        return Options(headers: {"authorization": box.get('rt')});
+  Repository._instance({
+    required Dio dio,
+    required Box box,
+  })  : _dio = dio,
+        _box = box;
+
+  factory Repository.getInstance(Dio dio, Box box) =>
+      Repository._instance(dio: dio, box: box);
+
+  static Options _getOptions(BoxProps token, Box box) {
+    switch (token) {
+      case BoxProps.at:
+        return Options(headers: {"authorization": box.get(BoxProps.at.value)});
+      case BoxProps.rt:
+        return Options(headers: {"authorization": box.get(BoxProps.rt.value)});
       default:
         throw Exception('invalid');
     }
   }
 
   Response? _response;
+  static const int minDelta = 13;
   static final debugData = {"email": "test10@email.com", "password": "testpwd"};
 
   void _catchDioErr(VoidCallback f) {
     try {
       f();
     } on DioError catch (e) {
-      throw e.message.toString();
+      throw "Err from Dio: ${e.message.toString()}";
     } catch (e) {
       throw Exception(e.toString());
     }
@@ -45,9 +46,9 @@ class Repository {
   Future<void> signup() async {
     _catchDioErr(
       () async {
-        _response = await dio
+        _response = await _dio
             .post(
-          '$_auth/signup',
+          AuthPath.signup.getPath(),
           data: debugData,
         )
             .whenComplete(() {
@@ -60,9 +61,9 @@ class Repository {
   //@public
   Future<void> signIn() async {
     _catchDioErr(() async {
-      _response = await dio
+      _response = await _dio
           .post(
-        '$_auth/signin',
+        AuthPath.signin.getPath(),
         data: debugData,
       )
           .whenComplete(() {
@@ -73,43 +74,47 @@ class Repository {
 
   Future<void> _deleteAll() async {
     _catchDioErr(() async {
-      await dio.post('$_auth/debug', options: _getOptions('at', _box));
+      await _dio.post(
+        AuthPath.debug.getPath(),
+        options: _getOptions(BoxProps.at, _box),
+      );
     });
   }
 
   Future<void> signOut() async {
-    if (_box.get('at') != null) {
+    if (_box.get(BoxProps.at.value) != null) {
       _catchDioErr(() async {
         await _timeChecker();
-        _response = await dio
-            .post('$_auth/signout', options: _getOptions('at', _box))
+        _response = await _dio
+            .post(
+          AuthPath.signout.getPath(),
+          options: _getOptions(BoxProps.at, _box),
+        )
             .whenComplete(() {
           _deleteAll();
-          _box.delete('rt');
+          _box.delete(BoxProps.rt.value);
         });
-
-        if (_response?.statusCode == 200) {
-          // go navigate home
-        }
       });
     }
   }
 
   Future<void> refreshToken() async {
-    if (_box.get('rt') != null) {
+    if (_box.get(BoxProps.rt.value) != null) {
       _catchDioErr(() async {
-        _response = await dio
-            .post('$_auth/refresh', options: _getOptions('rt', _box))
+        _response = await _dio
+            .post(
+              AuthPath.refresh.getPath(),
+              options: _getOptions(BoxProps.rt, _box),
+            )
             .whenComplete(() => _setToken());
-        if (_response?.statusCode == 200) {}
       });
     }
   }
 
   Future<void> _timeChecker() async {
-    final String old = _box.get('updatedAt');
+    final String old = _box.get(BoxProps.updatedAt.value);
     final DateTime deadline =
-        DateTime.parse(old).add(const Duration(minutes: 13));
+        DateTime.parse(old).add(const Duration(minutes: minDelta));
     final DateTime now = DateTime.now();
 
     // now < deadline(old + 10min) == -1
@@ -130,9 +135,56 @@ class Repository {
       final rt = subStr[1].split(':').last.trim();
       final updatedAt = subStr.last.split(' ').last.replaceAll('}', '');
 
-      _box.put('at', "Bearer $at");
-      _box.put('rt', "Bearer $rt");
-      _box.put('updatedAt', updatedAt);
+      _box.put(BoxProps.at.value, "Bearer $at");
+      _box.put(BoxProps.rt.value, "Bearer $rt");
+      _box.put(BoxProps.updatedAt.value, updatedAt);
+    }
+  }
+}
+
+enum BoxProps {
+  at(value: 'at'),
+  rt(value: 'rt'),
+  updatedAt(value: 'updatedAt');
+
+  final String value;
+
+  const BoxProps({
+    required this.value,
+  });
+}
+
+enum AuthPath {
+  home(path: ""),
+  signup(path: "signup"),
+  signin(path: "signin"),
+  signout(path: "signout"),
+  refresh(path: "refresh"),
+  debug(path: "debug");
+
+  final String path;
+
+  const AuthPath({
+    required this.path,
+  });
+}
+
+extension PathMaker on AuthPath {
+  String getPath() {
+    const String root = "http://10.0.2.2:3000/auth";
+    switch (this) {
+      case AuthPath.home:
+        return root;
+      case AuthPath.signup:
+        return '$root/${AuthPath.signup.path}';
+      case AuthPath.signin:
+        return '$root/${AuthPath.signin.path}';
+      case AuthPath.signout:
+        return '$root/${AuthPath.signout.path}';
+      case AuthPath.refresh:
+        return '$root/${AuthPath.refresh.path}';
+      case AuthPath.debug:
+        return '$root/${AuthPath.debug.path}';
     }
   }
 }

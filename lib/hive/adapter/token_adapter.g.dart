@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'token-adapter.dart';
+part of 'token_adapter.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
