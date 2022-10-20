@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 class Repository {
@@ -32,9 +32,9 @@ class Repository {
   static const int minDelta = 13;
   static const debugData = {"email": "test10@email.com", "password": "testpwd"};
 
-  FutureOr<void> _catchDioErr(VoidCallback f) {
+  FutureOr<void> _catchDioErr(AsyncCallback f) async {
     try {
-      f();
+      await f();
     } on DioError catch (e) {
       throw "Err from Dio: ${e.message.toString()}";
     } catch (e) {
