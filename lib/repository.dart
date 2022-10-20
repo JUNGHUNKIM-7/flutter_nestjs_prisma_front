@@ -30,7 +30,7 @@ class Repository {
   }
 
   static const int minDelta = 13;
-  static final debugData = {"email": "test10@email.com", "password": "testpwd"};
+  static const debugData = {"email": "test10@email.com", "password": "testpwd"};
 
   FutureOr<void> _catchDioErr(VoidCallback f) {
     try {
@@ -90,9 +90,11 @@ class Repository {
           AuthPath.signout.getPath(),
           options: _getOptions(BoxProp.at, _box),
         )
-            .whenComplete(() {
-          _deleteAll();
-          _box.delete(BoxProp.rt.value);
+            .whenComplete(() async {
+          await Future.wait([
+            _deleteAll(), //for debug
+            _box.delete(BoxProp.rt.value),
+          ]);
         });
       });
     }
@@ -127,7 +129,7 @@ class Repository {
     }
   }
 
-  FutureOr<void> _setToken() {
+  FutureOr<void> _setToken() async {
     final res = _response?.data.toString();
     if (res != null && res.isNotEmpty) {
       final subStr = res.split(',');
@@ -135,9 +137,11 @@ class Repository {
       final rt = subStr[1].split(':').last.trim();
       final updatedAt = subStr.last.split(' ').last.replaceAll('}', '');
 
-      _box.put(BoxProp.at.value, "Bearer $at");
-      _box.put(BoxProp.rt.value, "Bearer $rt");
-      _box.put(BoxProp.updatedAt.value, updatedAt);
+      await Future.wait([
+        _box.put(BoxProp.at.value, "Bearer $at"),
+        _box.put(BoxProp.rt.value, "Bearer $rt"),
+        _box.put(BoxProp.updatedAt.value, updatedAt),
+      ]);
     }
   }
 }

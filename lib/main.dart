@@ -109,7 +109,7 @@ class NoSignedPage extends HookConsumerWidget with Seed {
               .watch(dioProvider)
               .signIn()
               .catchError((e) => throw Exception(e.toString()))
-              .then((_) => context.go(Route.page2.path)),
+              .then((_) => context.go('/${Route.page2.path}')),
           child: Text(
             'sign in'.toUpperCase(),
           ),
