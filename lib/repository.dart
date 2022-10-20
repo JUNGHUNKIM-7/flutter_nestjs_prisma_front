@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 class Repository {
+  Response? _response;
   final Dio _dio;
   final Box _box;
 
@@ -28,7 +29,6 @@ class Repository {
     }
   }
 
-  Response? _response;
   static const int minDelta = 13;
   static final debugData = {"email": "test10@email.com", "password": "testpwd"};
 

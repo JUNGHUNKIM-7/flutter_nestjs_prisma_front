@@ -48,16 +48,16 @@ class MyApp extends HookConsumerWidget {
   static final GoRouter _router = GoRouter(
     routes: <GoRoute>[
       GoRoute(
-        path: Route.home.path.toString(),
+        path: Route.home.path,
         builder: (BuildContext context, GoRouterState state) => const Home(),
         routes: <GoRoute>[
           GoRoute(
-            path: Route.page2.path.toString(),
+            path: Route.page2.path,
             builder: (BuildContext context, GoRouterState state) =>
                 const SignedPage(),
             routes: [
               GoRoute(
-                path: Route.page2ById.path.toString(),
+                path: Route.page2ById.path,
                 builder: (BuildContext context, GoRouterState state) {
                   final id = state.params['id'] != null;
                   return NestedPage(
@@ -181,15 +181,11 @@ enum Route {
   });
 }
 
-extension Path on Route {
+extension PathString on Route {
   String getPath([String? text]) {
     if (text != null) {
       switch (this) {
-        case Route.home:
-          return text;
-        case Route.page2:
-          return text;
-        case Route.page2ById:
+        default:
           return text;
       }
     } else {
