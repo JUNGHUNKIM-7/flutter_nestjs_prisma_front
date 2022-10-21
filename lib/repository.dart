@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
@@ -51,8 +50,8 @@ class Repository {
           AuthPath.signup.getPath(),
           data: debugData,
         )
-            .whenComplete(() {
-          _setToken();
+            .whenComplete(() async {
+          await _setToken();
         });
       },
     );
@@ -66,8 +65,8 @@ class Repository {
         AuthPath.signin.getPath(),
         data: debugData,
       )
-          .whenComplete(() {
-        _setToken();
+          .whenComplete(() async {
+        await _setToken();
       });
     });
   }
@@ -108,7 +107,7 @@ class Repository {
               AuthPath.refresh.getPath(),
               options: _getOptions(BoxProp.rt, _box),
             )
-            .whenComplete(() => _setToken());
+            .whenComplete(() async => await _setToken());
       });
     }
   }
